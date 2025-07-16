@@ -1,96 +1,174 @@
-# System Design Document - Real-Time User Presence Dashboard
 
-Welcome to the System Design Document (SDD) for the Real-Time User Presence Dashboard, a comprehensive guide covering the architecture, components, technologies, and strategies underpinning this real-time application.
+# 📡 Real-Time User Presence Dashboard – System Design Document
 
-## Introduction
-
-This document serves as a foundational blueprint for the development, deployment, and maintenance of the Real-Time User Presence Dashboard. It aims to align project stakeholders by providing a detailed overview of the system's design and operational considerations.
-
-### Purpose
-
-The purpose of this SDD is to outline the system architecture, design decisions, and technical specifics for the Real-Time User Presence Dashboard, ensuring a cohesive and informed approach to the project's execution.
-
-### Scope
-
-This document covers the design and architecture of a web-based dashboard designed to display user presence information in real-time, utilizing technologies such as Erlang/OTP, Cowboy, WebSocket, and optionally MongooseIM for XMPP support.
-
-## Table of Contents
-
-1. [Introduction](#introduction)
-    - [Purpose](#purpose)
-    - [Scope](#scope)
-2. [System Overview](#system-overview)
-3. [System Architecture](#system-architecture)
-    - [Architecture Diagram](#architecture-diagram)
-    - [Components Description](#components-description)
-4. [Technology Stack](#technology-stack)
-5. [System Design](#system-design)
-    - [User Presence Tracking](#user-presence-tracking)
-    - [Real-Time Update Mechanism](#real-time-update-mechanism)
-    - [Security Considerations](#security-considerations)
-6. [Database Design](#database-design)
-7. [Scalability and Performance](#scalability-and-performance)
-8. [Security](#security)
-9. [Monitoring and Logging](#monitoring-and-logging)
-10. [Testing Strategy](#testing-strategy)
-11. [Deployment Strategy](#deployment-strategy)
-12. [Maintenance and Support](#maintenance-and-support)
-13. [Conclusion](#conclusion)
-
-## [System Overview](#system-overview)
-
-Briefly introduces the system, outlining its primary functions and how it fits into the larger ecosystem or business objectives.
-
-## [System Architecture](#system-architecture)
-
-### [Architecture Diagram](#architecture-diagram)
-
-Includes a diagram illustrating the system's architecture, highlighting its main components and how they interact.
-
-### [Components Description](#components-description)
-
-Describes each component of the system in detail, explaining its role, capabilities, and how it contributes to the system's functionality.
-
-## [Technology Stack](#technology-stack)
-
-Details the technologies chosen for the project, including languages, frameworks, databases, and third-party services.
-
-## [System Design](#system-design)
-
-Covers the design aspects of the system, including algorithms, protocols, data models, and architectural patterns.
-
-## [Database Design](#database-design)
-
-Outlines the database schema, including tables, relationships, indexes, and other relevant information.
-
-## [Scalability and Performance](#scalability-and-performance)
-
-Discusses strategies for ensuring the system can scale and perform under increased loads.
-
-## [Security](#security)
-
-Addresses the security measures in place to protect data and ensure the integrity of the system.
-
-## [Monitoring and Logging](#monitoring-and-logging)
-
-Describes the monitoring and logging setup for overseeing system health and troubleshooting issues.
-
-## [Testing Strategy](#testing-strategy)
-
-Outlines the approach to testing, including methodologies, tools, and processes.
-
-## [Deployment Strategy](#deployment-strategy)
-
-Details the deployment process, infrastructure, and tools used for rolling out the system.
-
-## [Maintenance and Support](#maintenance-and-support)
-
-Explains the procedures for maintaining the system, handling updates, and providing support.
-
-## [Conclusion](#conclusion)
-
-Summarizes the document and reinforces the importance of the design decisions made.
+**Title:** Real-Time User Presence Dashboard  
+**Lead Architect:** [Your Name]  
+**Date:** July 16, 2025  
+**Tech Stack:** Erlang/OTP, Cowboy, MongooseIM, PostgreSQL/ETS, Redis (optional), WebSocket  
 
 ---
 
-This System Design Document is a living document, subject to updates and revisions as the project evolves. Contributions and feedback are welcome to refine and improve the design.
+## 🔭 1. Purpose
+
+The **Real-Time User Presence Dashboard** is a backend and frontend system designed to:
+
+- Show real-time online/offline status of users.
+- Allow authenticated WebSocket subscriptions.
+- Track and update presence data with low latency.
+- Optionally integrate with **MongooseIM** to reflect XMPP presence.
+
+---
+
+## 🎯 2. Core Features
+
+| Feature | Description |
+|--------|-------------|
+| 🟢 Real-Time Presence Tracking | Tracks user online/offline status across multiple devices or services. |
+| 🛰️ WebSocket-based Dashboard | Live feed via Cowboy WebSocket handler—no polling, ultra-low latency. |
+| 🔐 Authenticated Sessions | Secure token-based or JWT authentication to manage session presence. |
+| 🧠 OTP Supervision Trees | Robust supervision model ensures each component self-heals on failure. |
+| 🔄 Multi-Node Distribution | Presence state replicates across Erlang nodes using `pg2` / `gproc`. |
+| 🗃️ Optional Persistent Store | Presence history can be persisted in PostgreSQL or Redis. |
+| ✉️ XMPP Integration (Optional) | With MongooseIM, mirrors XMPP presence signals to the dashboard. |
+| 📊 Presence Analytics | Time spent online, device types, and location patterns. |
+| ⚙️ Admin Panel | Admins can view aggregated data, filter by group, or impersonate sessions. |
+
+---
+
+## 🏗️ 3. High-Level Architecture
+
+```
+               +---------------------+
+               |     Admin Panel     |
+               +---------+-----------+
+                         |
+                         | REST/WebSocket
+                         v
++-----------+    +--------------------+    +----------------+
+| Web Client| -> | Cowboy HTTP Server | -> | Presence Engine|
++-----------+    +--------------------+    +----------------+
+                         |                          |
+                         | uses OTP behaviours      | subscribes
+                         v                          v
+                   +-------------+           +---------------+
+                   | WebSocket   |<--------->| User Registry |
+                   | Handler     |           |   (ETS/Redis) |
+                   +-------------+           +---------------+
+                                                  |
+                                                  |
+                                        +--------------------+
+                                        | MongooseIM Adapter |
+                                        +--------------------+
+                                                  |
+                                           +--------------+
+                                           | MongooseIM DB|
+                                           +--------------+
+```
+
+---
+
+## ⚙️ 4. Component Breakdown
+
+### A. Cowboy HTTP/WebSocket Server
+
+- Uses `cowboy_router` to direct HTTP and WS requests.
+- WebSocket handlers use Erlang processes per user session.
+- Each connection is supervised using a `simple_one_for_one` supervisor.
+
+### B. Presence Engine (Core)
+
+- **Tracks**: user sessions, online/offline states.
+- **Stores**: current presence in ETS; long-term in Redis/PostgreSQL.
+- **Pushes**: updates to subscribed sockets.
+- **Design**: OTP GenServer per user or group (sharded).
+
+### C. User Registry
+
+- Built using ETS for low-latency access.
+- Optionally uses `gproc` or `pg` for distributed presence sync.
+- Could be backed up by Redis for cross-node recovery.
+
+### D. MongooseIM Adapter (Optional)
+
+- Erlang GenServer that subscribes to MongooseIM events.
+- Translates XMPP stanzas into internal presence updates.
+- Leverages `mod_presence` hooks or database polling.
+
+### E. Admin Panel
+
+- Built in Phoenix/React/LiveView for UI.
+- Shows:
+  - Total online users
+  - Last seen timestamps
+  - Session breakdown
+  - Filters by group, role, geography
+
+---
+
+## 🧱 5. Supervision Tree Design
+
+```
+real_time_presence_app
+├── cowboy_listener_sup
+├── presence_registry_sup
+│   └── presence_worker_sup (DynamicSupervisor)
+│       └── presence_worker (gen_server)
+├── mongoose_adapter_sup (optional)
+├── presence_store_sup
+│   ├── ets_manager (gen_server)
+│   └── db_writer (gen_server)
+```
+
+---
+
+## 🌐 6. Scalability & Distribution
+
+- BEAM distribution handles intra-node comms.
+- ETS tables use read-concurrency and are partitioned if needed.
+- Nodes can scale horizontally (shared-nothing) with presence state replicated using:
+  - `pg` or `gproc` for clustering
+  - Redis for cross-region cluster sync (optional)
+
+---
+
+## 🔐 7. Security
+
+- JWT or OAuth2 token validation before WebSocket upgrade.
+- Rate limiting and origin checks at Cowboy level.
+- Encrypted traffic over TLS.
+
+---
+
+## 📈 8. Observability & Monitoring
+
+- Use `telemetry` + `prometheus.erl` to expose metrics:
+  - Active users
+  - WebSocket connection health
+  - Latency of updates
+  - XMPP adapter failures
+- Admin metrics exposed via `/metrics` endpoint.
+
+---
+
+## 🧪 9. Testing Strategy
+
+- `eunit` and `common_test` for unit/integration tests.
+- Property-based testing with `propEr` for crash-resilience and consistency.
+- Simulation of network partitions and presence conflicts in test harness.
+
+---
+
+## 🛠️ 10. Deployment Considerations
+
+- Deploy with `rebar3` releases.
+- Systemd + Docker container support.
+- Blue-green or hot-code upgrades supported via `release_handler`.
+
+---
+
+## 🔮 11. Future Enhancements
+
+- Presence replay: visualizing who was online over time.
+- Geo-awareness: display region of connection (via IP).
+- Alerting: Slack/webhook when certain users or roles go online.
+- Typing indicators, activity pulses.
