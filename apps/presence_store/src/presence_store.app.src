@@ -1,0 +1,52 @@
+%% @doc Application resource file for presence_store
+%% This application provides storage abstraction layer
+%%
+%% Design Decision: Separate storage from core logic for flexibility
+%% Trade-off: Additional abstraction layer vs direct storage access
+%% - Chosen: Abstraction allows easy switching between storage backends
+{application, presence_store,
+ [{description, "Storage abstraction layer for presence data"},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {mod, {presence_store_app, []}},
+  {applications,
+   [kernel,
+    stdlib
+   ]},
+  {env, [
+    %% Default storage backend
+    %% Options: ets, redis, postgres
+    {backend, ets},
+    
+    %% ETS table configuration
+    {ets_options, [
+      {name, presence_data},
+      {type, set},  % set vs ordered_set trade-off: set is faster for lookups
+      {keypos, 1},
+      {access, public},  % public for read concurrency
+      {read_concurrency, true},
+      {write_concurrency, true}
+    ]},
+    
+    %% Redis configuration (when backend = redis)
+    {redis_options, [
+      {host, "localhost"},
+      {port, 6379},
+      {database, 0},
+      {pool_size, 10}
+    ]},
+    
+    %% PostgreSQL configuration (when backend = postgres)  
+    {postgres_options, [
+      {host, "localhost"},
+      {port, 5432},
+      {database, "presence_db"},
+      {username, "presence_user"},
+      {pool_size, 10}
+    ]}
+  ]},
+  {modules, []},
+
+  {licenses, ["Apache 2.0"]},
+  {links, []}
+ ]}.

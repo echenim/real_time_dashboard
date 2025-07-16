@@ -1,0 +1,50 @@
+%% @doc Application resource file for presence_adapter_xmpp
+%% This application provides XMPP integration via MongooseIM
+%%
+%% Design Decision: Optional adapter pattern for XMPP integration
+%% Trade-off: Tight coupling vs loose integration
+%% - Chosen: Adapter pattern for optional deployment without XMPP
+{application, presence_adapter_xmpp,
+ [{description, "XMPP adapter for presence system integration"},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {mod, {presence_adapter_xmpp_app, []}},
+  {applications,
+   [kernel,
+    stdlib,
+    presence_core,
+    escalus  % XMPP client library for MongooseIM integration
+   ]},
+  {env, [
+    %% XMPP server configuration
+    {xmpp_host, "localhost"},
+    {xmpp_port, 5222},
+    {xmpp_domain, "localhost"},
+    
+    %% MongooseIM specific configuration
+    {mongooseim_api_endpoint, "http://localhost:8088"},
+    {mongooseim_api_auth, [
+      {username, <<"admin">>},
+      {password, <<"secret">>}
+    ]},
+    
+    %% Integration mode
+    %% Options: bidirectional, xmpp_to_presence, presence_to_xmpp
+    {sync_mode, bidirectional},
+    
+    %% JID to User ID mapping
+    %% Trade-off: Flexible mapping vs direct JID usage
+    {jid_mapping, [
+      {strip_domain, true},  % user@domain -> user
+      {lowercase, true}
+    ]},
+    
+    %% Presence priority handling
+    {respect_xmpp_priority, true},
+    {default_priority, 0}
+  ]},
+  {modules, []},
+
+  {licenses, ["Apache 2.0"]},
+  {links, []}
+ ]}.

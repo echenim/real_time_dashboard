@@ -1,0 +1,53 @@
+%% @doc Application resource file for presence_api
+%% This application provides HTTP and WebSocket API endpoints
+%%
+%% Design Decision: Using Cowboy for its WebSocket support and performance
+%% Trade-off: Cowboy vs other HTTP servers (Elli, Mochiweb)
+%% - Chosen: Cowboy for excellent WebSocket support and active maintenance
+{application, presence_api,
+ [{description, "HTTP and WebSocket API for presence system"},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {mod, {presence_api_app, []}},
+  {applications,
+   [kernel,
+    stdlib,
+    cowboy,
+    presence_core,
+    presence_store,
+    jsx  % For JSON encoding/decoding
+   ]},
+  {env, [
+    %% HTTP server configuration
+    {http_port, 8080},
+    {http_acceptors, 100},
+    
+    %% WebSocket configuration
+    {ws_idle_timeout, 60000},  % 1 minute idle timeout
+    {ws_max_frame_size, 65536},  % 64KB max frame
+    
+    %% Authentication configuration
+    {auth_enabled, true},
+    {jwt_secret, <<"change_me_in_production">>},
+    {jwt_algorithm, hs256},
+    
+    %% Rate limiting configuration
+    %% Trade-off: Stricter limits = better protection but may affect legitimate users
+    {rate_limit, [
+      {max_connections_per_ip, 100},
+      {max_requests_per_minute, 1000},
+      {ws_messages_per_minute, 600}  % 10 messages/second average
+    ]},
+    
+    %% CORS configuration
+    {cors_enabled, true},
+    {cors_origins, [<<"*">>]},  % Configure specific origins in production
+    
+    %% API versioning
+    {api_version, "v1"}
+  ]},
+  {modules, []},
+
+  {licenses, ["Apache 2.0"]},
+  {links, []}
+ ]}.

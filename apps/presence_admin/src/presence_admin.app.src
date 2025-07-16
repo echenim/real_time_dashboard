@@ -1,0 +1,59 @@
+%% @doc Application resource file for presence_admin
+%% This application provides admin interface and metrics
+%%
+%% Design Decision: Separate admin from main API for security and modularity
+%% Trade-off: Separate app vs integrated admin endpoints
+%% - Chosen: Separate for better security isolation and independent scaling
+{application, presence_admin,
+ [{description, "Admin interface and metrics for presence system"},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {mod, {presence_admin_app, []}},
+  {applications,
+   [kernel,
+    stdlib,
+    cowboy,
+    presence_core,
+    presence_store,
+    telemetry,      % For metrics collection
+    telemetry_metrics,
+    telemetry_poller
+   ]},
+  {env, [
+    %% Admin API configuration
+    {admin_port, 9090},
+    {admin_acceptors, 10},
+    
+    %% Admin authentication
+    %% Trade-off: Basic auth vs OAuth - starting simple
+    {admin_auth, [
+      {username, <<"admin">>},
+      {password, <<"change_me_in_production">>}
+    ]},
+    
+    %% Metrics configuration
+    {metrics_enabled, true},
+    {metrics_interval, 5000},  % Collect every 5 seconds
+    
+    %% Telemetry configuration
+    {telemetry_events, [
+      [presence, user, online],
+      [presence, user, offline],
+      [presence, ws, connect],
+      [presence, ws, disconnect],
+      [presence, api, request]
+    ]},
+    
+    %% Prometheus configuration
+    {prometheus_enabled, true},
+    {prometheus_port, 9091},
+    
+    %% Dashboard configuration
+    {dashboard_enabled, true},
+    {dashboard_refresh_interval, 1000}  % 1 second refresh
+  ]},
+  {modules, []},
+
+  {licenses, ["Apache 2.0"]},
+  {links, []}
+ ]}.

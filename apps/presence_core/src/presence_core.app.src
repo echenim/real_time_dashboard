@@ -1,0 +1,37 @@
+%% @doc Application resource file for presence_core
+%% This file defines the application metadata and dependencies
+%% 
+%% Design Decision: Starting with minimal dependencies, will add as needed
+%% Trade-off: Keeping deps minimal vs including everything upfront
+%% - Chosen: Minimal to avoid bloat and clearly document what's actually used
+{application, presence_core,
+ [{description, "Core presence tracking logic and state management"},
+  {vsn, "0.1.0"},
+  {registered, [presence_registry, presence_sup]},
+  {mod, {presence_core_app, []}},
+  {applications,
+   [kernel,
+    stdlib,
+    sasl  % For better error logging and release handling
+   ]},
+  {env, [
+    %% Default heartbeat interval in milliseconds
+    %% Trade-off: Shorter intervals = faster detection but more overhead
+    %% Chosen: 30s as reasonable balance for most use cases
+    {heartbeat_interval, 30000},
+    
+    %% Timeout before marking user as offline (3x heartbeat interval)
+    %% Trade-off: Longer timeout = more tolerance for network issues
+    %% but slower offline detection
+    {offline_timeout, 90000},
+    
+    %% Maximum number of users per node
+    %% Trade-off: Higher limit = more memory usage
+    %% Chosen: 100k as reasonable for single node
+    {max_users_per_node, 100000}
+  ]},
+  {modules, []},
+
+  {licenses, ["Apache 2.0"]},
+  {links, []}
+ ]}.

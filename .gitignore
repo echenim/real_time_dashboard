@@ -1,0 +1,17 @@
+# Ignore all .log files
+*.log
+
+# Ignore vscodenode_modules folder
+.vscode
+.CLAUDE.md 
+.CLAUDE_RULES.md
+# Ignore build output
+dist/
+build/
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore environment variables
+.env
