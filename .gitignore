@@ -3,7 +3,7 @@
 
 # Ignore vscodenode_modules folder
 .vscode
-.CLAUDE.md 
+CLAUDE.md 
 .CLAUDE_RULES.md
 # Ignore build output
 dist/
