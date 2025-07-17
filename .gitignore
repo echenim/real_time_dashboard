@@ -8,6 +8,7 @@ CLAUDE.md
 # Ignore build output
 dist/
 build/
+_build/
 
 # Ignore OS-specific files
 .DS_Store
