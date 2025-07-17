@@ -5,6 +5,7 @@
 .vscode
 CLAUDE.md 
 .CLAUDE_RULES.md
+TEST-presence_tracker_tests.xml
 # Ignore build output
 dist/
 build/
