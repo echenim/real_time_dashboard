@@ -65,7 +65,7 @@ init(Req, _Opts) ->
             case presence_api_rate_limit:check_ws_connection(IP) of
                 ok ->
                     %% Extract JWT from query params or Authorization header
-                    Token = extract_token(Req),
+                    _Token = extract_token(Req),  % Will be used in auth message
                     
                     %% Initial state
                     State = #state{
