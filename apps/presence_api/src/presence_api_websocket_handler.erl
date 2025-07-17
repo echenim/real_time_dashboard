@@ -238,9 +238,15 @@ terminate(_Reason, _Req, State) ->
     ok = presence_api_ws_registry:unregister(self()),
     
     %% Disconnect user if authenticated
+    %% Updated to use presence_tracker from presence_core
     case State#state.authenticated of
         true when State#state.user_id =/= undefined ->
-            presence_user:disconnect(State#state.user_id);
+            case presence_registry:lookup(State#state.user_id) of
+                {ok, Pid} ->
+                    presence_tracker:disconnect(Pid);
+                _ ->
+                    ok
+            end;
         _ ->
             ok
     end,
@@ -288,7 +294,8 @@ handle_client_message(<<"auth">>, Payload, State) ->
             UserId = maps:get(<<"sub">>, Claims),
             
             %% Start presence tracking for user
-            case presence_user_sup:start_user(UserId) of
+            %% Updated to use presence_tracker_sup from presence_core
+            case presence_tracker_sup:start_tracker(UserId) of
                 {ok, _Pid} ->
                     %% Update state
                     NewState = State#state{
@@ -330,7 +337,13 @@ handle_client_message(<<"auth">>, Payload, State) ->
 %% Heartbeat message
 handle_client_message(<<"heartbeat">>, _Payload, State) when State#state.authenticated ->
     %% Update user heartbeat
-    presence_user:heartbeat(State#state.user_id),
+    %% Updated to use presence_tracker from presence_core
+    case presence_registry:lookup(State#state.user_id) of
+        {ok, Pid} ->
+            presence_tracker:heartbeat(Pid);
+        _ ->
+            ok
+    end,
     
     %% Send acknowledgment
     Msg = jsx:encode(#{
@@ -430,18 +443,28 @@ validate_user_ids(_) ->
 %% @private
 %% @doc
 %% Get current status of users.
+%% Updated to use presence_tracker from presence_core
 %% @end
 -spec get_users_status(UserIds :: [binary()]) -> [map()].
 get_users_status(UserIds) ->
     lists:filtermap(
         fun(UserId) ->
-            case presence_user:get_state(UserId) of
-                {ok, State} ->
-                    {true, #{
-                        user_id => UserId,
-                        status => maps:get(status, State, offline),
-                        last_seen => maps:get(last_heartbeat, State, null)
-                    }};
+            case presence_registry:lookup(UserId) of
+                {ok, Pid} ->
+                    case presence_tracker:get_status(Pid) of
+                        {ok, Status} ->
+                            {true, #{
+                                user_id => UserId,
+                                status => maps:get(status, Status, offline),
+                                last_seen => maps:get(last_seen, Status, null)
+                            }};
+                        _ ->
+                            {true, #{
+                                user_id => UserId,
+                                status => offline,
+                                last_seen => null
+                            }}
+                    end;
                 {error, not_found} ->
                     {true, #{
                         user_id => UserId,
