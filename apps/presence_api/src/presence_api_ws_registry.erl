@@ -242,7 +242,7 @@ handle_cast(_Msg, State) ->
     {noreply, State}.
 
 %% @private
-handle_info({'DOWN', MonRef, process, Pid, _Reason}, State) ->
+handle_info({'DOWN', _MonRef, process, Pid, _Reason}, State) ->
     %% Process died, clean up
     %% Remove from ETS
     ets:delete(?TABLE, Pid),

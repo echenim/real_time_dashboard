@@ -39,6 +39,12 @@
 -callback get_stats() -> {ok, map()} | {error, term()}.
 
 %% Optional callbacks for advanced features
+-callback query_users(Query :: map()) -> {ok, [map()]} | {error, term()}.
+-callback subscribe(Callback :: fun((Event :: term()) -> ok)) -> {ok, reference()} | {error, term()}.
+-callback unsubscribe(Ref :: reference()) -> ok | {error, term()}.
+-callback backup(Path :: binary()) -> ok | {error, term()}.
+-callback restore(Path :: binary()) -> ok | {error, term()}.
+
 -optional_callbacks([
     query_users/1,        % Advanced queries
     subscribe/1,          % Real-time change notifications

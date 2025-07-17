@@ -31,7 +31,8 @@
     check_ws_connection/1,
     check_ws_message/2,
     get_limits/1,
-    reset_limits/1
+    reset_limits/1,
+    cleanup_old_entries/0  % Called by timer
 ]).
 
 %% Table names

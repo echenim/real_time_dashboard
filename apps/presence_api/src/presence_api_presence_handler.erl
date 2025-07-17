@@ -262,16 +262,21 @@ update_presence(Req, #state{user_id = UserId} = State) ->
 validate_presence_data(Data) when is_map(Data) ->
     %% Check metadata if provided
     case maps:get(<<"metadata">>, Data, undefined) of
-        undefined -> ok;
-        Meta when is_map(Meta) -> ok;
+        undefined -> 
+            %% Check store_data if provided
+            case maps:get(<<"store_data">>, Data, undefined) of
+                undefined -> ok;
+                Store when is_map(Store) -> ok;
+                _ -> {error, <<"store_data must be an object">>}
+            end;
+        Meta when is_map(Meta) -> 
+            %% Check store_data if provided
+            case maps:get(<<"store_data">>, Data, undefined) of
+                undefined -> ok;
+                Store when is_map(Store) -> ok;
+                _ -> {error, <<"store_data must be an object">>}
+            end;
         _ -> {error, <<"metadata must be an object">>}
-    end,
-    
-    %% Check store_data if provided
-    case maps:get(<<"store_data">>, Data, undefined) of
-        undefined -> ok;
-        Store when is_map(Store) -> ok;
-        _ -> {error, <<"store_data must be an object">>}
     end;
 validate_presence_data(_) ->
     {error, <<"request body must be an object">>}.

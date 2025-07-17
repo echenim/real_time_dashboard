@@ -167,6 +167,4 @@ rel/real_time_presence_dashboard/
 - `Makefile`: Optional build automation (rebar3 commands, Docker, etc.)
 - `README.md`: Entry point for contributors and documentation
 
----
 
-Let me know if you'd like a ZIP scaffolding, stub files for each `.erl`, or to auto-generate `rebar3` apps for this layout.

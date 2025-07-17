@@ -57,21 +57,16 @@ start_link() ->
 start_tracker(UserId) when is_binary(UserId) ->
     %% Check if tracker already exists
     case presence_registry:lookup(UserId) of
-        {ok, ExistingPid} when is_process_alive(ExistingPid) ->
-            ?LOG_WARNING("Tracker already exists for user ~p", [UserId]),
-            {error, {already_started, ExistingPid}};
+        {ok, ExistingPid} ->
+            case is_process_alive(ExistingPid) of
+                true ->
+                    ?LOG_WARNING("Tracker already exists for user ~p", [UserId]),
+                    {error, {already_started, ExistingPid}};
+                false ->
+                    start_new_tracker(UserId)
+            end;
         _ ->
-            %% Start new tracker
-            case supervisor:start_child(?SERVER, [UserId]) of
-                {ok, Pid} ->
-                    ?LOG_INFO("Started presence tracker for user ~p with pid ~p", 
-                              [UserId, Pid]),
-                    {ok, Pid};
-                {error, Reason} = Error ->
-                    ?LOG_ERROR("Failed to start tracker for user ~p: ~p", 
-                               [UserId, Reason]),
-                    Error
-            end
+            start_new_tracker(UserId)
     end.
 
 %% @doc
@@ -101,8 +96,8 @@ stop_tracker(UserId) when is_binary(UserId) ->
 get_tracker_count() ->
     %% Count all children of this supervisor
     Children = supervisor:which_children(?SERVER),
-    length([Child || {_Id, Pid, _Type, _Modules} <- Children, 
-                     is_pid(Pid), is_process_alive(Pid)]).
+    length([1 || {_Id, Pid, _Type, _Modules} <- Children, 
+                 is_pid(Pid), is_process_alive(Pid)]).
 
 %%%===================================================================
 %%% Supervisor callbacks
@@ -151,5 +146,16 @@ init([]) ->
 %%% Internal functions
 %%%===================================================================
 
-%% Note: No internal functions needed for this simple supervisor
-%% All complexity is handled by the OTP supervisor behavior
+%% @private
+%% @doc Starts a new tracker for the given user
+start_new_tracker(UserId) ->
+    case supervisor:start_child(?SERVER, [UserId]) of
+        {ok, Pid} ->
+            ?LOG_INFO("Started presence tracker for user ~p with pid ~p", 
+                      [UserId, Pid]),
+            {ok, Pid};
+        {error, Reason} = Error ->
+            ?LOG_ERROR("Failed to start tracker for user ~p: ~p", 
+                       [UserId, Reason]),
+            Error
+    end.

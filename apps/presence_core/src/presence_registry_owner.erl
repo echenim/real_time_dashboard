@@ -166,7 +166,7 @@ handle_info(Info, State) ->
 %% Cleanup on termination.
 %% @end
 -spec terminate(Reason :: term(), State :: #state{}) -> ok.
-terminate(Reason, State) ->
+terminate(Reason, _State) ->
     lager:info("Registry owner terminating: ~p", [Reason]),
     
     %% Note: We don't delete the tables here because they might

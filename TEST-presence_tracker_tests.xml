@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuite tests="8" failures="0" errors="0" skipped="0" time="0.509" name="module 'presence_tracker_tests'">
+  <testcase time="0.114" name="presence_tracker_tests:0 test_start_stop (Start and stop tracker)">
+    <system-out>
+    </system-out>
+  </testcase>
+  <testcase time="0.102" name="presence_tracker_tests:0 test_update_status (Update status)">
+    <system-out>
+    </system-out>
+  </testcase>
+  <testcase time="0.000" name="presence_tracker_tests:0 test_get_status (Get status)">
+    <system-out>
+    </system-out>
+  </testcase>
+  <testcase time="0.152" name="presence_tracker_tests:0 test_heartbeat (Heartbeat mechanism)">
+    <system-out>
+    </system-out>
+  </testcase>
+  <testcase time="0.051" name="presence_tracker_tests:0 test_heartbeat_timeout (Heartbeat timeout)">
+    <system-out>
+    </system-out>
+  </testcase>
+  <testcase time="0.000" name="presence_tracker_tests:0 test_disconnect (Disconnect)">
+    <system-out>
+    </system-out>
+  </testcase>
+  <testcase time="0.066" name="presence_tracker_tests:0 test_multiple_status_updates (Multiple status updates)">
+    <system-out>
+    </system-out>
+  </testcase>
+  <testcase time="0.000" name="presence_tracker_tests:0 test_concurrent_operations (Concurrent operations)">
+    <system-out>
+    </system-out>
+  </testcase>
+</testsuite>

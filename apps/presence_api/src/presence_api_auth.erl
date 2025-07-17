@@ -83,7 +83,7 @@ execute(Req, Env) ->
 verify_token(Token) when is_binary(Token) ->
     %% Get JWT secret and algorithm
     Secret = presence_api_app:get_env(jwt_secret, <<"change_me_in_production">>),
-    Algorithm = presence_api_app:get_env(jwt_algorithm, hs256),
+    _Algorithm = presence_api_app:get_env(jwt_algorithm, hs256),
     
     %% Create JWK (JSON Web Key)
     JWK = #{
